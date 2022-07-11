@@ -43,6 +43,7 @@
      <Compile Include="Assets\_Script\ImageSynthesis\ImageSynthesis.cs" />
      <Compile Include="Assets\_Script\ImageSynthesis\ExampleUI.cs" />
      <Compile Include="Assets\_Script\serversocket.cs" />
+     <Compile Include="Assets\_Script\CheckpointManager.cs" />
      <Compile Include="Assets\_Script\SocketManager.cs" />
      <Compile Include="Assets\_Script\ImageSynthesis\ColorEncoding.cs" />
      <Compile Include="Assets\_Script\CameraManager.cs" />

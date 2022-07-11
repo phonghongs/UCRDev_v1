@@ -26,7 +26,14 @@ public class SocketManager : MonoBehaviour
     private int[] remotePort;
     private VehiclesPool pool;
     public GameObject[] playerPosition;
-    public int numPlayer;
+    private int numPlayer;
+
+    public int getNumPlayer(){
+        return this.numPlayer;
+    }
+    // public PlayerShape[] getPlayers(){
+    //     return players;
+    // }
 
 
     void Start()
@@ -58,7 +65,7 @@ public class SocketManager : MonoBehaviour
                 else 
                     break;
             }
-            Debug.Log(remotePort[j]);
+            // Debug.Log(remotePort[j]);//
         }
 
         //Socket repair
@@ -81,7 +88,7 @@ public class SocketManager : MonoBehaviour
 
             players[ind] = new PlayerShape(){
                 obj = newObj, 
-                controller = newObj.GetComponent<PrometeoCarController>()
+                controller = newObj.GetComponent<PrometeoCarController>(),
             };
 
             RestartServer(ind);
@@ -117,7 +124,7 @@ public class SocketManager : MonoBehaviour
         {
             tcp_Listener[serverIndex] = new TcpListener(IPAddress.Any, remotePort[serverIndex]); //System.Net.IPAddress
             tcp_Listener[serverIndex].Start();
-            Debug.Log("Server Started at host: localhost, port "+remotePort);
+            // Debug.Log("Server Started at host: localhost, port "+remotePort);//
 
             // Buffer for reading data
 
@@ -184,7 +191,7 @@ public class SocketManager : MonoBehaviour
 
         catch (ThreadAbortException)
         {
-            Debug.Log("Error");
+            // Debug.Log("Error");//
         }
         finally
         {
@@ -192,5 +199,7 @@ public class SocketManager : MonoBehaviour
             tcp_Listener[serverIndex].Stop();
         }
     }
-
+    public PlayerShape[] getPlayer(){
+        return players;
+    }
 }
