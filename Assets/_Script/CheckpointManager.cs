@@ -1,13 +1,32 @@
+// using System.Collections;
+// using System.Collections.Generic;
+// using UnityEngine;
+
+// public class CheckpointManager : MonoBehaviour
+// {
+//     // Start is called before the first frame update
+//     void Start()
+//     {
+        
+//     }
+
+//     // Update is called once per frame
+//     void Update()
+//     {
+        
+//     }
+// }
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+// using UnityEngine.UI;
 using System;
 
 // using static SocketManager;
 public class Checkpoints{
     private int numOfCP;
     private int[,] arrayCheckpointsInit;
+    private SocketManager playerCreator;
     public int getNumOfCP(){
         return numOfCP;
     }
@@ -91,15 +110,17 @@ public class Checkpoints{
             }
         }
         if(mycheck){return;}
-        // Vehicles Players = new Vehicles{
-        // }
         for(int i = 0; i < arrayLen; i += 1){
             if(arrayCheckpoints[i, 1] > 1){
                 if(i == 0){
-                    // float a = DistanceGameO2GameO(CP_s[i], Players.getPlayers()[]);
-                    // float b = DistanceGameO2GameO(CP_s[i+1], Players.getPlayers()[]);
+                    Debug.Log("Distance");
+                    // Debug.Log(playerCreator.players[0].obj);
+                    // float a = DistanceGameO2GameO(CP_s[0], playerCreator.players[0].obj);
+                    // float b = DistanceGameO2GameO(CP_s[1], playerCreator.players[0].obj);
+                    // Debug.Log("Vehicle to cp1 : " + a);
+                    // Debug.Log("Vehicle to cp2 : " + b);
                     // if(b > a){
-                    //     CP_s[i+1].transform.name = (i+2).ToString();
+                    //     CP_s[1].transform.name = (2).ToString();
                     // }
                 }
             }
@@ -115,15 +136,18 @@ public class Checkpoints{
 public class Vehicles{
     private SocketManager allManagerPlayer;
     private int numOfVehicles;
-    public void setSocket(SocketManager A){
-        allManagerPlayer  = A;
+    public SocketManager getSocketManager(){
+        return allManagerPlayer;
     }
-    public void setNumPlayers(int A){
-        numOfVehicles = A;
+    public void setNumPlayers(){
+        numOfVehicles = allManagerPlayer.getNumPlayer();
     }
     public PlayerShape[] getPlayers(){
         numOfVehicles = allManagerPlayer.getNumPlayer();
         return allManagerPlayer.players;
+    }
+    public PlayerShape getPlayer(int index){
+        return allManagerPlayer.players[index];
     }
     public int getNumOfVehicles(){
         return allManagerPlayer.getNumPlayer();
@@ -145,6 +169,7 @@ public class CheckpointManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        // Checkpoints A = new Checkpoints();
+        // A.FixNameCheckpoints();
     }
 }
