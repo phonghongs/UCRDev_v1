@@ -20,10 +20,8 @@ public class PlayerShape {
     }
 }
 
-public class SocketManager : MonoBehaviour
-{
+public class SocketManager : MonoBehaviour{
     // Start is called before the first frame update
-
     public GameObject[] prefabs;
     public PlayerShape[] players;
     private bool[] mRunning;
@@ -33,7 +31,6 @@ public class SocketManager : MonoBehaviour
     private VehiclesPool pool;
     public GameObject[] playerPosition;
     private int numPlayer;
-
     public int getNumPlayer(){
         return this.numPlayer;
     }
@@ -43,6 +40,15 @@ public class SocketManager : MonoBehaviour
     public PlayerShape getPlayer(int index = 0){
         return players[index];
     }
+    public Vector3 getPositionPlayers(int index = 0){
+        return players[index].obj.transform.position;
+    }
+    public Quaternion getRotationPlayers(int index = 0){
+        return players[index].obj.transform.rotation;
+    }
+    // public Vector3 getPositionPlayer(){
+    //     return 
+    // }
     public void SetControllerAvtivate(int index){
         if (index < 0 || index >= numPlayer){
             return;
@@ -52,6 +58,7 @@ public class SocketManager : MonoBehaviour
         }
         players[index].controller.controllerActivate = true;
     }
+
     public void StartSocketServer(){
         numPlayer = playerPosition.Length;
         pool = VehiclesPool.Create(prefabs);
@@ -62,7 +69,7 @@ public class SocketManager : MonoBehaviour
         remotePort = new int[numPlayer];
         int i = 0;
         int baseIP = 11000;
-        for (int j = 0; j < numPlayer; j += 1){
+        for (int j = 0; j < numPlayer; j ++){
             bool portOpen =  true;
             while (i < 100 && portOpen) {
                 remotePort[j] = baseIP + i;
@@ -80,21 +87,6 @@ public class SocketManager : MonoBehaviour
                 else 
                     break;
             }
-            players = new PlayerShape[numPlayer];
-            for (int ind = 0; ind < numPlayer; ind++){
-                int perfabIndx = UnityEngine.Random.Range(0, prefabs.Length);
-                var shape = pool.Get((ShapeLabel)perfabIndx);
-                var newObj = shape.obj;
-                newObj.transform.position = playerPosition[ind].transform.position;
-                newObj.transform.rotation = playerPosition[ind].transform.rotation;
-
-                players[ind] = new PlayerShape(){
-                    obj = newObj, 
-                    controller = newObj.GetComponent<PrometeoCarController>(),
-                };
-                Debug.Log("Player created");
-                RestartServer(ind);
-            }
             // Debug.Log(remotePort[j]);//
         }
 
@@ -103,6 +95,26 @@ public class SocketManager : MonoBehaviour
         mRunning = new bool[numPlayer];
         mThread = new Thread[numPlayer];
         // Create Player instance
+        CreatePlayers();
+    }
+    public void CreatePlayers(){
+        // Create Player instance
+        numPlayer = playerPosition.Length;
+        players = new PlayerShape[numPlayer];
+        for (int ind = 0; ind < numPlayer; ind += 1){
+            int perfabIndx = UnityEngine.Random.Range(0, prefabs.Length);
+            var shape = pool.Get((ShapeLabel)perfabIndx);
+            var newObj = shape.obj;
+            newObj.transform.position = playerPosition[ind].transform.position;
+            newObj.transform.rotation = playerPosition[ind].transform.rotation;
+
+            players[ind] = new PlayerShape(){
+                obj = newObj, 
+                controller = newObj.GetComponent<PrometeoCarController>()
+            };
+            
+            RestartServer(ind);
+        }
     }
     void StartListening(int serverIndex){
         try{
@@ -122,12 +134,10 @@ public class SocketManager : MonoBehaviour
                 else{
                     TcpClient client = tcp_Listener[serverIndex].AcceptTcpClient();
                     NetworkStream stream = client.GetStream();
-
                     int i = 0;
                     jsonData = null;
                     byte[] msg = null;
                     // Loop to receive all the data sent by the client.
-
                     while((i = stream.Read(bytes, 0, bytes.Length))!=0){
                         jsonData = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
                         var myDetails = JsonConvert.DeserializeObject < SetController > (jsonData);
@@ -183,9 +193,11 @@ public class SocketManager : MonoBehaviour
     }
     private void Awake() {
         StartSocketServer();
-        Debug.Log("AWAKE");
     }
     void Start(){
+        
+    }
+    void Update(){
         
     }
 }
