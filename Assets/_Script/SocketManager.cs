@@ -12,12 +12,16 @@ using System.Net.NetworkInformation;
 public class PlayerShape {
     public PrometeoCarController controller;
     public GameObject obj;
+    public Vector3 getPosition(){
+        return obj.transform.position;
+    }
+    public Quaternion getRotation(){
+        return obj.transform.rotation;
+    }
 }
 
-public class SocketManager : MonoBehaviour
-{
+public class SocketManager : MonoBehaviour{
     // Start is called before the first frame update
-
     public GameObject[] prefabs;
     public PlayerShape[] players;
     private bool[] mRunning;
@@ -26,11 +30,36 @@ public class SocketManager : MonoBehaviour
     private int[] remotePort;
     private VehiclesPool pool;
     public GameObject[] playerPosition;
-    public int numPlayer;
+    private int numPlayer;
+    public int getNumPlayer(){
+        return this.numPlayer;
+    }
+    public PlayerShape[] getPlayers(){
+        return players;
+    }    
+    public PlayerShape getPlayer(int index = 0){
+        return players[index];
+    }
+    public Vector3 getPositionPlayers(int index = 0){
+        return players[index].obj.transform.position;
+    }
+    public Quaternion getRotationPlayers(int index = 0){
+        return players[index].obj.transform.rotation;
+    }
+    // public Vector3 getPositionPlayer(){
+    //     return 
+    // }
+    public void SetControllerAvtivate(int index){
+        if (index < 0 || index >= numPlayer){
+            return;
+        }
+        for (int i = 0; i < numPlayer; i ++){
+            players[i].controller.controllerActivate = false;
+        }
+        players[index].controller.controllerActivate = true;
+    }
 
-
-    void Start()
-    {
+    public void StartSocketServer(){
         numPlayer = playerPosition.Length;
         pool = VehiclesPool.Create(prefabs);
         pool.ReclaimAll();
@@ -58,7 +87,7 @@ public class SocketManager : MonoBehaviour
                 else 
                     break;
             }
-            Debug.Log(remotePort[j]);
+            // Debug.Log(remotePort[j]);//
         }
 
         //Socket repair
@@ -66,16 +95,16 @@ public class SocketManager : MonoBehaviour
         mRunning = new bool[numPlayer];
         mThread = new Thread[numPlayer];
         // Create Player instance
+        CreatePlayers();
+    }
+    public void CreatePlayers(){
+        // Create Player instance
+        numPlayer = playerPosition.Length;
         players = new PlayerShape[numPlayer];
-
-        for (int ind = 0; ind < numPlayer; ind++){
+        for (int ind = 0; ind < numPlayer; ind += 1){
             int perfabIndx = UnityEngine.Random.Range(0, prefabs.Length);
             var shape = pool.Get((ShapeLabel)perfabIndx);
             var newObj = shape.obj;
-
-            // newObj.transform.position = new Vector3(ind * 3, ind * 3, ind * 3);
-            // newObj.transform.rotation = Quaternion.identity;
-
             newObj.transform.position = playerPosition[ind].transform.position;
             newObj.transform.rotation = playerPosition[ind].transform.rotation;
 
@@ -83,71 +112,37 @@ public class SocketManager : MonoBehaviour
                 obj = newObj, 
                 controller = newObj.GetComponent<PrometeoCarController>()
             };
-
+            
             RestartServer(ind);
         }
     }
-
-    public void RestartServer(int serverIndex)
-    {
-        stopListening(serverIndex);
-        mRunning[serverIndex] = true;
-        mThread[serverIndex] = new Thread (() => StartListening(serverIndex));
-        mThread[serverIndex].Start();
-    }
-
-    public void stopListening(int serverIndex)
-    {
-        mRunning[serverIndex] = false;
-    }
-
-    public void SetControllerAvtivate(int index){
-        if (index < 0 || index >= numPlayer){
-            return;
-        }
-        for (int i = 0; i < numPlayer; i ++){
-            players[i].controller.controllerActivate = false;
-        }
-        players[index].controller.controllerActivate = true;
-    }
-
-    void StartListening(int serverIndex)
-    {
-        try
-        {
+    void StartListening(int serverIndex){
+        try{
             tcp_Listener[serverIndex] = new TcpListener(IPAddress.Any, remotePort[serverIndex]); //System.Net.IPAddress
             tcp_Listener[serverIndex].Start();
-            Debug.Log("Server Started at host: localhost, port "+remotePort);
+            // Debug.Log("Server Started at host: localhost, port "+remotePort);//
 
             // Buffer for reading data
-
             Byte[] bytes = new Byte[256];
             String jsonData = null;
 
-            while (mRunning[serverIndex])
-            {
+            while (mRunning[serverIndex]){
                 // check if new connections are pending, if not, be nice and sleep 100ms
-                if (!tcp_Listener[serverIndex].Pending())
-                {
+                if (!tcp_Listener[serverIndex].Pending()){
                     Thread.Sleep(100);
                 }
-                else
-                {
+                else{
                     TcpClient client = tcp_Listener[serverIndex].AcceptTcpClient();
                     NetworkStream stream = client.GetStream();
-
                     int i = 0;
                     jsonData = null;
                     byte[] msg = null;
                     // Loop to receive all the data sent by the client.
-
-                    while((i = stream.Read(bytes, 0, bytes.Length))!=0)
-                    {
+                    while((i = stream.Read(bytes, 0, bytes.Length))!=0){
                         jsonData = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
                         var myDetails = JsonConvert.DeserializeObject < SetController > (jsonData);
                         String returnMessage = "";
-                        switch (myDetails.Cmd)
-                        {
+                        switch (myDetails.Cmd){
                             case 1:
                                 PrometeoCarController.VehicleStageCl vhS = players[serverIndex].controller.GetState();
                                 var VehicleStage_ = new VehicleStage{
@@ -161,11 +156,9 @@ public class SocketManager : MonoBehaviour
                                 returnMessage = JsonConvert.SerializeObject(VehicleStage_);
                                 msg = Encoding.UTF8.GetBytes(returnMessage);
                                 break;
-
                             case 2:
                                 msg = players[serverIndex].controller.imageResult.originalIMG;
                                 break;
-
                             case 3:
                                 msg = players[serverIndex].controller.imageResult.segmentIMG;
                                 break;
@@ -175,22 +168,36 @@ public class SocketManager : MonoBehaviour
                         Debug.Log(msg.Length);
                         stream.Write(msg, 0, msg.Length);
                     }
-
                     client.Close();
                     Debug.Log("Client closed" );
                 }
             } // while
         }
-
-        catch (ThreadAbortException)
-        {
-            Debug.Log("Error");
+        catch (ThreadAbortException){
+            // Debug.Log("Error");//
         }
-        finally
-        {
+        finally{
             mRunning[serverIndex] = false;
             tcp_Listener[serverIndex].Stop();
         }
     }
+    public void RestartServer(int serverIndex){
+        stopListening(serverIndex);
+        mRunning[serverIndex] = true;
+        mThread[serverIndex] = new Thread (() => StartListening(serverIndex));
+        mThread[serverIndex].Start();
+    }
 
+    public void stopListening(int serverIndex){
+        mRunning[serverIndex] = false;
+    }
+    private void Awake() {
+        StartSocketServer();
+    }
+    void Start(){
+        
+    }
+    void Update(){
+        
+    }
 }

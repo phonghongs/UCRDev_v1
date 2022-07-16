@@ -18,7 +18,7 @@ public class CameraManager : MonoBehaviour
 
     void TaskOnClick(){
         playerIndex += 1;
-        if (playerIndex >= playerCreator.numPlayer){
+        if (playerIndex >= playerCreator.getNumPlayer()){
             playerIndex = 0;
         }
         playerCreator.SetControllerAvtivate(playerIndex);
