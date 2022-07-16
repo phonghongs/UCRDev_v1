@@ -8,7 +8,7 @@ public class Checkpoints{
     private int numOfCP;
     private int[,] arrayCheckpointsInit;
     private SocketManager playerCreator;
-    int abc;
+    int abc, xyz;
     public int getNumOfCP(){
         return numOfCP;
     }
