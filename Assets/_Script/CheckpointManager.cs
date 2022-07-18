@@ -7,9 +7,9 @@ using System;
 public class Checkpoints{
     private int numOfCP;
     private int[,] arrayCheckpointsInit;
-    private SocketManager playerCreator;
+    public Checkpoints CP;
     public int getNumOfCP(){
-        return numOfCP;
+        return arrayCheckpointsInit.Length/2;
     }
     public int? getNumOfCheckpoints(){
         GameObject[] CP_s = GameObject.FindGameObjectsWithTag("CHECKPOINT");
@@ -109,10 +109,6 @@ public class Checkpoints{
                         }
                         continue;
                     }
-                    // float a = DistanceGameO2GameO(CP_s[i], CP_s[i-1]);
-                    // float b = DistanceGameO2GameO(CP_s[i+1], CP_s[i-1]);
-                    // Debug.Log("Vehicle to cp " + (i + 1)+ " : " + a);
-                    // Debug.Log("Vehicle to cp " + (i + 1) + ": " + b);
                     if(b > a){
                         CP_s[i+1].transform.name = (i+2).ToString();
                     }else{
@@ -122,61 +118,79 @@ public class Checkpoints{
                 arrayCheckpointsInit[i, 1] -= 1;
                 arrayCheckpointsInit[i+1, 1] += 1;
             }
-            // float a =  DistanceGameO2GameO(CP_s[i]);
         }
     }
 
     public float DistanceGameO2GameO(GameObject A, GameObject B){
         return Vector3.Distance(A.transform.position, B.transform.position);
     }
-    private void OnDestroy() {
-    }
-    // void Start(){
-
-    // }
-    // void Update(){
-        
-    // }
+    
 }
 public class Vehicles{
-    private SocketManager allManagerPlayer;
     private int numOfVehicles;
-    public SocketManager getSocketManager(){
-        return allManagerPlayer;
+    private GameObject[] Vehicle;
+    private int[] CheckpointsPass;
+    /*
+    Vehicle    Car[0]         Car[1]       Car[2]      ...     Car[n]
+    Passsed     2               4           1          ...      5
+    */
+    public void InnitVehicle(int numVe, int[] checkPass, GameObject[] Veh){
+        numOfVehicles = numVe;
+        CheckpointsPass = checkPass;
+        Vehicle = Veh;
     }
-    public void setNumPlayers(){
-        numOfVehicles = allManagerPlayer.getNumPlayer();
+    public int[] InitCheckpointsPass(int num){
+        int[] T = new int[num];
+        return T;
     }
-    public PlayerShape[] getPlayers(){
-        numOfVehicles = allManagerPlayer.getNumPlayer();
-        return allManagerPlayer.players;
+    public void ClearCheckpointsPass(){
+        CheckpointsPass = new int[numOfVehicles];
     }
-    public PlayerShape getPlayer(int index){
-        return allManagerPlayer.players[index];
+    public int getnumOfVehicles(){
+        return numOfVehicles;
     }
-    public int getNumOfVehicles(){
-        return allManagerPlayer.getNumPlayer();
+    public GameObject[] getVehicles(){
+        return Vehicle;
     }
+    public GameObject getVehicle(int index){
+        return Vehicle[index];
+    }
+    public int[] getListCheckpointsPass(){
+        return CheckpointsPass;
+    }
+    public int getCheckpointsPass(int index){
+        return CheckpointsPass[index];
+    }
+    public void VehiclePassChecponit(int indexVehicle){
+        CheckpointsPass[indexVehicle] += 1;
+    }
+
+
 }
-public class CheckpointManager : MonoBehaviour
-{
+public class CheckpointManager : MonoBehaviour{
     private int numOfCheckpoint;
     private int numOfVehicle;
-    private GameObject CheckPoints;
-    private SocketManager allManagerPlayer;
-    // Start is called before the first frame update
-    void Start()
-    {   
+
+    private void Awake() {
         Checkpoints A = new Checkpoints();
         A.FixNameCheckpoints();
     }
+    private void OnTriggerEnter(Collider other) {
+        if(other.tag == "Player"){
+            if(this.tag == "CHECKPOINT"){
 
-    // Update is called once per frame
-    void Update()
-    {
-        // Checkpoints A = new Checkpoints();
-        // A.FixNameCheckpoints();
+            }else{
 
-        // Debug.Log(allManagerPlayer.getPositionPlayers(0));
+            }
+        }
+    }
+    private void OnTriggerExit(Collider other) {
+        if(other.tag == "Player"){
+            if(this.tag == "CHECKPOINT"){
+                
+            }else {
+
+            }
+        }
     }
 }

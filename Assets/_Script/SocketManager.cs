@@ -191,6 +191,13 @@ public class SocketManager : MonoBehaviour{
     public void stopListening(int serverIndex){
         mRunning[serverIndex] = false;
     }
+
+
+
+
+    public SocketManager getSocketManager(){
+        return this;
+    }
     private void Awake() {
         StartSocketServer();
     }
@@ -198,6 +205,7 @@ public class SocketManager : MonoBehaviour{
         
     }
     void Update(){
-        
+        SocketManager A = getSocketManager();
+        Debug.Log(A.players[0].obj.transform.position);
     }
 }
