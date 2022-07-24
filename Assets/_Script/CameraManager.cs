@@ -6,7 +6,6 @@ using UnityEngine.UI;
 public class CameraManager : MonoBehaviour
 {
     public Button changeVehicles;
-    public SocketManager playerCreator;
     public CarFollower camController;
     public GameObject initializeCamera;
     private int playerIndex = 0;
@@ -18,10 +17,10 @@ public class CameraManager : MonoBehaviour
 
     void TaskOnClick(){
         playerIndex += 1;
-        if (playerIndex >= playerCreator.getNumPlayer()){
+        if (playerIndex >= PlayerManager.Instance.getNumPlayer()){
             playerIndex = 0;
         }
-        playerCreator.SetControllerAvtivate(playerIndex);
-        camController.carTransform = playerCreator.players[playerIndex].obj.GetComponent<Transform>();
+        PlayerManager.Instance.SetControllerAvtivate(playerIndex);
+        camController.carTransform = PlayerManager.Instance.getPlayer(playerIndex).obj.GetComponent<Transform>();
     }
 }

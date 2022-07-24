@@ -145,18 +145,18 @@ public class Vehicles{
         return allManagerPlayer;
     }
     public void setNumPlayers(){
-        numOfVehicles = allManagerPlayer.getNumPlayer();
+        numOfVehicles = PlayerManager.Instance.getNumPlayer();
     }
-    public PlayerShape[] getPlayers(){
-        numOfVehicles = allManagerPlayer.getNumPlayer();
-        return allManagerPlayer.players;
-    }
-    public PlayerShape getPlayer(int index){
-        return allManagerPlayer.players[index];
-    }
-    public int getNumOfVehicles(){
-        return allManagerPlayer.getNumPlayer();
-    }
+    //public PlayerShape[] getPlayers(){
+    //    numOfVehicles = PlayerManager.Instance.getNumPlayer();
+    //    return PlayerManager.Instance.getPlayers();
+    //}
+    //public PlayerShape getPlayer(int index){
+    //    return allManagerPlayer.players[index];
+    //}
+    //public int getNumOfVehicles(){
+    //    return allManagerPlayer.getNumPlayer();
+    //}
 }
 public class CheckpointManager : MonoBehaviour
 {
