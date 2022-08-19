@@ -328,7 +328,9 @@ public class PrometeoCarController : MonoBehaviour
         gameObject.GetComponent<Transform>().rotation
       );
 
-      imageResult = synth.GetImageResult(width, height);
+      StartCoroutine(synth.GetImageResult(180, 320, (result) =>{
+        // Debug.LogError(result.originalIMG.Length + ":" + result.segmentIMG.Length);
+      }));
     }
 
     // Change image shape

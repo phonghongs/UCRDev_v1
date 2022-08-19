@@ -1,8 +1,10 @@
 using UnityEngine;
 using UnityEngine.Rendering;
-using System.Collections;
 using System.IO;
-
+using Unity.Collections;
+using System.Collections;
+using Unity.Burst;
+using Unity.Jobs;
 // @TODO:
 // . support custom color wheels in optical flow via lookup textures
 // . support custom depth encoding
@@ -48,11 +50,14 @@ public class ImageSynthesis : MonoBehaviour {
 
 	public float opticalFlowSensitivity = 1.0f;
 
+	byte[] originalIMG, segmentIMG;
+	bool oriCall = false, segCall = false;
 	// cached materials
 	private Material opticalFlowMaterial;
 
 	void Start()
 	{
+
 		// default fallbacks, if shaders are unspecified
 		if (!uberReplacementShader)
 			uberReplacementShader = Shader.Find("Hidden/UberReplacement");
@@ -68,6 +73,13 @@ public class ImageSynthesis : MonoBehaviour {
 		OnCameraChange();
 		OnSceneChange();
 	}
+
+	// private void Update() {
+	// 	Debug.Log("DAAVAODAY");
+	// 	StartCoroutine(GetImageResult(180, 320, (result) =>{
+	// 		Debug.LogError(result.originalIMG.Length + ":" + result.segmentIMG.Length);
+	// 	}));
+	// }
 
 	void LateUpdate()
 	{
@@ -89,7 +101,6 @@ public class ImageSynthesis : MonoBehaviour {
 		var newCamera = go.GetComponent<Camera>();
 		return newCamera;
 	}
-
 
 	static private void SetupCameraWithReplacementShader(Camera cam, Shader shader, ReplacelementModes mode)
 	{
@@ -157,7 +168,6 @@ public class ImageSynthesis : MonoBehaviour {
 		// SetupCameraWithPostShader(capturePasses[5].camera, opticalFlowMaterial, DepthTextureMode.Depth | DepthTextureMode.MotionVectors);
 	}
 
-
 	public void OnSceneChange()
 	{
 		var renderers = Object.FindObjectsOfType<Renderer>();
@@ -174,95 +184,28 @@ public class ImageSynthesis : MonoBehaviour {
 		}
 	}
 
-	public void Save(string filename, int width = -1, int height = -1, string path = "")
-	{
-		if (width <= 0 || height <= 0)
-		{
-			width = Screen.width;
-			height = Screen.height;
-		}
 
-		var filenameExtension = System.IO.Path.GetExtension(filename);
-		if (filenameExtension == "")
-			filenameExtension = ".png";
-		var filenameWithoutExtension = Path.GetFileNameWithoutExtension(filename);
 
-		var pathWithoutExtension = Path.Combine(path, filenameWithoutExtension);
-
-		// execute as coroutine to wait for the EndOfFrame before starting capture
-		StartCoroutine(
-			WaitForEndOfFrameAndSave(pathWithoutExtension, filenameExtension, width, height));
-	}
-
-	private IEnumerator WaitForEndOfFrameAndSave(string filenameWithoutExtension, string filenameExtension, int width, int height)
+ 	public IEnumerator GetImageResult(int width, int height, System.Action<CaptureResult> callback) 
 	{
 		yield return new WaitForEndOfFrame();
-		Save(filenameWithoutExtension, filenameExtension, width, height);
+		oriCall = false; segCall = false;
+		StartCoroutine( GetImageResult(capturePasses[0].camera, width, height, capturePasses[0].supportsAntialiasing, capturePasses[0].needsRescale, (result) => {
+			originalIMG = result;
+			oriCall = true;
+		}));
+
+		StartCoroutine(GetImageResult(capturePasses[1].camera, width, height, capturePasses[1].supportsAntialiasing, capturePasses[1].needsRescale, (result) => {
+			segmentIMG = result;
+			segCall = true;
+		}));
+		
+		yield return new WaitUntil(()=>{return (oriCall && segCall);});
+		callback?.Invoke(new CaptureResult(originalIMG, segmentIMG));
 	}
 
-	private void Save(string filenameWithoutExtension, string filenameExtension, int width, int height)
-	{
-		foreach (var pass in capturePasses)
-			Save(pass.camera, filenameWithoutExtension + pass.name + filenameExtension, width, height, pass.supportsAntialiasing, pass.needsRescale);
-	}
-
-	private void Save(Camera cam, string filename, int width, int height, bool supportsAntialiasing, bool needsRescale)
-	{
-		var mainCamera = GetComponent<Camera>();
-		var depth = 24;
-		var format = RenderTextureFormat.Default;
-		var readWrite = RenderTextureReadWrite.Default;
-		var antiAliasing = (supportsAntialiasing) ? Mathf.Max(1, QualitySettings.antiAliasing) : 1;
-
-		var finalRT =
-			RenderTexture.GetTemporary(width, height, depth, format, readWrite, antiAliasing);
-		var renderRT = (!needsRescale) ? finalRT :
-			RenderTexture.GetTemporary(mainCamera.pixelWidth, mainCamera.pixelHeight, depth, format, readWrite, antiAliasing);
-		var tex = new Texture2D(width, height, TextureFormat.RGB24, false);
-
-		var prevActiveRT = RenderTexture.active;
-		var prevCameraRT = cam.targetTexture;
-
-		// render to offscreen texture (readonly from CPU side)
-		RenderTexture.active = renderRT;
-		cam.targetTexture = renderRT;
-
-		cam.Render();
-
-		if (needsRescale)
-		{
-			// blit to rescale (see issue with Motion Vectors in @KNOWN ISSUES)
-			RenderTexture.active = finalRT;
-			Graphics.Blit(renderRT, finalRT);
-			RenderTexture.ReleaseTemporary(renderRT);
-		}
-
-		// read offsreen texture contents into the CPU readable texture
-		tex.ReadPixels(new Rect(0, 0, tex.width, tex.height), 0, 0);
-		tex.Apply();
-
-		// encode texture into PNG
-		var bytes = tex.EncodeToPNG();
-		File.WriteAllBytes(filename, bytes);					
-
-		// restore state and cleanup
-		cam.targetTexture = prevCameraRT;
-		RenderTexture.active = prevActiveRT;
-
-		Object.Destroy(tex);
-		RenderTexture.ReleaseTemporary(finalRT);
-	}
-
-	public CaptureResult GetImageResult(int width, int height) 
-	{
-		CaptureResult result = new CaptureResult(
-			GetImageResult(capturePasses[0].camera, width, height, capturePasses[0].supportsAntialiasing, capturePasses[0].needsRescale),
-			GetImageResult(capturePasses[1].camera, width, height, capturePasses[1].supportsAntialiasing, capturePasses[1].needsRescale)
-		);
-		return result;
-	}
-
-	private byte[] GetImageResult(Camera cam, int width, int height, bool supportsAntialiasing, bool needsRescale)
+	[BurstCompile]
+	IEnumerator GetImageResult(Camera cam, int width, int height, bool supportsAntialiasing, bool needsRescale, System.Action<byte[]> callback)
 	{
 		var mainCamera = GetComponent<Camera>();
 		var depth = 24;
@@ -285,6 +228,8 @@ public class ImageSynthesis : MonoBehaviour {
 
 		cam.Render();
 
+		yield return new WaitForEndOfFrame();
+
 		if (needsRescale)
 		{
 			// blit to rescale (see issue with Motion Vectors in @KNOWN ISSUES)
@@ -297,8 +242,11 @@ public class ImageSynthesis : MonoBehaviour {
 		tex.ReadPixels(new Rect(0, 0, tex.width, tex.height), 0, 0);
 		tex.Apply();
 
+		NativeArray<byte> imageBytes = new NativeArray<byte>(tex.GetRawTextureData(), Allocator.Temp);
+        var bytes = ImageConversion.EncodeNativeArrayToJPG(imageBytes, tex.graphicsFormat, (uint)width, (uint)height);
+
 		// encode texture into PNG
-		var bytes = tex.EncodeToPNG();
+		// var bytes = tex.EncodeToPNG();
 
 		// restore state and cleanup
 		cam.targetTexture = prevCameraRT;
@@ -306,8 +254,7 @@ public class ImageSynthesis : MonoBehaviour {
 
 		Object.Destroy(tex);
 		RenderTexture.ReleaseTemporary(finalRT);
-
-		return bytes;
+		callback?.Invoke(bytes.ToArray());
 	}
 
 	#if UNITY_EDITOR

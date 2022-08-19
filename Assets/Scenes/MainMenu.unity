@@ -311,7 +311,6 @@ MonoBehaviour:
   vehiclePrefabs:
   - {fileID: 6339118865675659057, guid: 30c9104f65bf39240a076f29df67db8c, type: 3}
   - {fileID: 294685292379683378, guid: 323b7d833b62acd4e942a7dab85280a7, type: 3}
-  - {fileID: 8421566994612111089, guid: 86b36710f84dec94c8567d85c5e3fea5, type: 3}
 --- !u!1 &1334272303
 GameObject:
   m_ObjectHideFlags: 0
