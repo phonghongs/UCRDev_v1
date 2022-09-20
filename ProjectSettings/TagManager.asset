@@ -6,6 +6,8 @@ TagManager:
   tags:
   - CameraSensor
   - CHECKPOINT
+  - Coin
+  - Outline
   layers:
   - Default
   - TransparentFX
@@ -14,7 +16,7 @@ TagManager:
   - Water
   - UI
   - cube
-  - 
+  - road
   - 
   - 
   - 

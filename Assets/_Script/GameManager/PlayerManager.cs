@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class PlayerShape
 {
+    public int playerID;
     public PrometeoCarController controller;
     public GameObject obj;
     public Vector3 getPosition()
@@ -63,6 +64,33 @@ public class PlayerManager : MonoBehaviour
         players[index].controller.controllerActivate = true;
     }
 
+    public void SetAVCOntroller()
+    {
+        for (int ind = 0; ind < numPlayer; ind += 1)
+        {
+            players[ind].controller.isAvController = !players[ind].controller.isAvController;
+            Debug.LogError(players[ind].controller.isAvController);
+        }
+    }
+
+    public void ResetPlayer(GameObject other)
+    {
+        for (int ind = 0; ind < numPlayer; ind += 1)
+        {
+            if (players[ind].controller.vehicleID == other.gameObject.GetComponent<PrometeoCarController>().vehicleID){
+                StartCoroutine(ResetHelper(other, ind));
+            }
+        }
+    }
+
+    IEnumerator ResetHelper(GameObject other, int ind){
+        other.transform.position = playerPosition[ind].transform.position;
+        other.transform.rotation = playerPosition[ind].transform.rotation;
+        other.GetComponent<Rigidbody>().isKinematic = true;
+        yield return new WaitForSeconds(0.1f);
+        other.GetComponent<Rigidbody>().isKinematic = false;
+    }
+
     public void SetSpawnPosition(Transform[] _playerPosition)
     {
         numPlayer = _playerPosition.Length;
@@ -80,8 +108,11 @@ public class PlayerManager : MonoBehaviour
             newObj.transform.position = playerPosition[ind].transform.position;
             newObj.transform.rotation = playerPosition[ind].transform.rotation;
 
+            newObj.GetComponent<PrometeoCarController>().vehicleID = ind;
+
             players[ind] = new PlayerShape()
             {
+                playerID = ind,
                 obj = newObj,
                 controller = newObj.GetComponent<PrometeoCarController>()
             };

@@ -55,14 +55,6 @@ public class VehicleStage
         get;
         set;
     }
-    public float Lat {
-        get;
-        set;
-    }
-    public float Lon {
-        get;
-        set;
-    }
     public float Heading {
         get;
         set;
@@ -181,16 +173,10 @@ public class serversocket : MonoBehaviour
                                     Cmd = 1,
                                     Speed = 0.0f,
                                     Angle = 0.0f,
-                                    Lat = 0.0f,
-                                    Lon = 0.0f,
                                     Heading = 0.0f
                                 };
                                 returnMessage = JsonConvert.SerializeObject(VehicleStage_);
                                 msg = Encoding.UTF8.GetBytes(returnMessage);
-                                break;
-
-                            case 2:
-                                msg = camController.imageResult.originalIMG;
                                 break;
 
                             case 3:

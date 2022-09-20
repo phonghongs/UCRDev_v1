@@ -21,6 +21,7 @@ public class PrometeoCarController : MonoBehaviour
       public Camera playerCam;
       public ImageSynthesis.CaptureResult imageResult;
 
+      public int vehicleID;
 
     //CAR SETUP
       [Space(20)]
@@ -31,7 +32,7 @@ public class PrometeoCarController : MonoBehaviour
       [Range(10, 120)]
       public int maxReverseSpeed = 45; //The maximum speed that the car can reach while going on reverse in km/h.
       [Range(1, 10)]
-      public int accelerationMultiplier = 2; // How fast the car can accelerate. 1 is a slow acceleration and 10 is the fastest.
+      public int accelerationMultiplier = 4; // How fast the car can accelerate. 1 is a slow acceleration and 10 is the fastest.
       [Space(10)]
       [Range(10, 45)]
       public int maxSteeringAngle = 25; // The maximum angle that the tires can reach while rotating the steering wheel.
@@ -140,7 +141,7 @@ public class PrometeoCarController : MonoBehaviour
       float localVelocityZ;
       float localVelocityX;
       bool deceleratingCar;
-      bool isAvController = false;
+      public bool isAvController = false;
 
       /*
       The following variables are used to store information about sideways friction of the wheels (such as
@@ -172,8 +173,11 @@ public class PrometeoCarController : MonoBehaviour
     }
 
     int height = 180;
-    int width = 320;
+    int width = 640;
     int framecount = 0;
+
+    float avSpeed = 0;
+    float avAngle = 0;
     // Start is called before the first frame update
     void Start()
     {
@@ -262,7 +266,8 @@ public class PrometeoCarController : MonoBehaviour
       //CAR DATA
 
       // We determine the speed of the car.
-      carSpeed = (2 * Mathf.PI * frontLeftCollider.radius * frontLeftCollider.rpm * 60) / 1000;
+      // carSpeed = (2 * Mathf.PI * frontLeftCollider.radius * frontLeftCollider.rpm * 60) / 1000;
+      carSpeed = GetComponent<Rigidbody>().velocity.magnitude*3.6f;
       // Save the local velocity of the car in the x axis. Used to know if the car is drifting.
       localVelocityX = transform.InverseTransformDirection(carRigidbody.velocity).x;
       // Save the local velocity of the car in the z axis. Used to know if the car is going forward or backwards.
@@ -317,13 +322,18 @@ public class PrometeoCarController : MonoBehaviour
           ResetSteeringAngle();
         }
       }
+      else if (isAvController){
+        CancelInvoke("DecelerateCar");
+        deceleratingCar = false;
+        AVController(avSpeed, avAngle);
+      }
 
       // We call the method AnimateWheelMeshes() in order to match the wheel collider movements with the 3D meshes of the wheels.
       AnimateWheelMeshes();
 
       vhS = new VehicleStageCl(
         carSpeed,
-        carSteering,
+        frontLeftCollider.steerAngle,
         gameObject.GetComponent<Transform>().position,
         gameObject.GetComponent<Transform>().rotation
       );
@@ -337,16 +347,22 @@ public class PrometeoCarController : MonoBehaviour
       height = height_;
     }
 
+    public void SetAVCOntroller(float speed, float angle)
+    {
+      avSpeed = speed;
+      avAngle = angle;
+    }
+
     public void AVController(float throttle, float steering){
       if (steering != 0 ){
-        SteeringModule(steering);
+        SteeringModule(steering / (float)maxSteeringAngle);
       }
       else {
         ResetSteeringAngle();
       }
 
       if (throttle != 0){
-        SpeedModule(throttle);
+        SpeedModule(throttle / (float)maxSpeed);
       }
       else {
         Brakes();
@@ -395,7 +411,7 @@ public class PrometeoCarController : MonoBehaviour
     //STEERING METHODS
     //
     public void SteeringModule(float steering = 1){
-      float newMaxSteeringAngle = Math.Abs(maxSteeringAngle * steering);
+      float newMaxSteeringAngle = Math.Abs((float)maxSteeringAngle * steering);
       if (steering < 0) {
         steeringAxis = steeringAxis - (Time.deltaTime * 10f * steeringSpeed);
 
@@ -477,9 +493,8 @@ public class PrometeoCarController : MonoBehaviour
         isDrifting = false;
         DriftCarPS();
       }
-
       if (throttle > 0){
-        float newMaxSpeed = Math.Abs(maxSpeed * throttle);
+        float newMaxSpeed = Math.Abs((float)maxSpeed * throttle);
         throttleAxis = throttleAxis + (Time.deltaTime * 3f);
 
         if(throttleAxis > 1f){

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class CameraManager : MonoBehaviour
 {
@@ -9,13 +10,19 @@ public class CameraManager : MonoBehaviour
     public CarFollower camController;
     public GameObject initializeCamera;
     private int playerIndex = 0;
+    // public TMP_Text portShow;
 
     void Start(){
         camController.carTransform = initializeCamera.GetComponent<Transform>();
-        changeVehicles.onClick.AddListener(TaskOnClick);
+        // changeVehicles.onClick.AddListener(TaskOnClick);
     }
 
-    void TaskOnClick(){
+    void Update(){
+        // portShow.text = PlayerManager.Instance.getPlayer(0).controller.carSpeed.ToString();
+    }
+
+    public void TaskOnClick(){
+        Debug.Log("Vao ne");
         playerIndex += 1;
         if (playerIndex >= PlayerManager.Instance.getNumPlayer()){
             playerIndex = 0;

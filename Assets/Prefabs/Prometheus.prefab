@@ -10741,7 +10741,7 @@ MonoBehaviour:
   playerCam: {fileID: 4430530464762242135}
   maxSpeed: 120
   maxReverseSpeed: 45
-  accelerationMultiplier: 6
+  accelerationMultiplier: 4
   maxSteeringAngle: 25
   steeringSpeed: 0.5
   brakeForce: 600

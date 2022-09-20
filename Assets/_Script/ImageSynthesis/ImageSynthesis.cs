@@ -19,15 +19,12 @@ using System.IO;
 public class ImageSynthesis : MonoBehaviour {
 	// pass configuration
 	private CapturePass[] capturePasses = new CapturePass[] {
-		new CapturePass() { name = "_img" },
 		new CapturePass() { name = "_layer", supportsAntialiasing = false }
 	};
 
 	public struct CaptureResult {
-		public byte[] originalIMG;
 		public byte[] segmentIMG;
-		public CaptureResult(byte[] img, byte[] seg) {
-			originalIMG = img;
+		public CaptureResult(byte[] seg) {
 			segmentIMG = seg;
 		}
 	}
@@ -61,8 +58,8 @@ public class ImageSynthesis : MonoBehaviour {
 			opticalFlowShader = Shader.Find("Hidden/OpticalFlow");
 
 		// use real camera to capture final image
-		capturePasses[0].camera = GetComponent<Camera>();
-		for (int q = 1; q < capturePasses.Length; q++)
+		// capturePasses[0].camera = GetComponent<Camera>();
+		for (int q = 0; q < capturePasses.Length; q++)
 			capturePasses[q].camera = CreateHiddenCamera (capturePasses[q].name);
 
 		OnCameraChange();
@@ -89,7 +86,6 @@ public class ImageSynthesis : MonoBehaviour {
 		var newCamera = go.GetComponent<Camera>();
 		return newCamera;
 	}
-
 
 	static private void SetupCameraWithReplacementShader(Camera cam, Shader shader, ReplacelementModes mode)
 	{
@@ -147,16 +143,15 @@ public class ImageSynthesis : MonoBehaviour {
 			opticalFlowMaterial = new Material(opticalFlowShader);
 		opticalFlowMaterial.SetFloat("_Sensitivity", opticalFlowSensitivity);
 
-		capturePasses[1].camera.GetComponent<Camera>().farClipPlane = 50;
+		capturePasses[0].camera.GetComponent<Camera>().farClipPlane = 50;
 
 		// setup command buffers and replacement shaders
 		// SetupCameraWithReplacementShader(capturePasses[1].camera, uberReplacementShader, ReplacelementModes.ObjectId);
-		SetupCameraWithReplacementShader(capturePasses[1].camera, uberReplacementShader, ReplacelementModes.CatergoryId);
+		SetupCameraWithReplacementShader(capturePasses[0].camera, uberReplacementShader, ReplacelementModes.CatergoryId);
 		// SetupCameraWithReplacementShader(capturePasses[3].camera, uberReplacementShader, ReplacelementModes.DepthCompressed, Color.white);
 		// SetupCameraWithReplacementShader(capturePasses[4].camera, uberReplacementShader, ReplacelementModes.Normals);
 		// SetupCameraWithPostShader(capturePasses[5].camera, opticalFlowMaterial, DepthTextureMode.Depth | DepthTextureMode.MotionVectors);
 	}
-
 
 	public void OnSceneChange()
 	{
@@ -174,90 +169,10 @@ public class ImageSynthesis : MonoBehaviour {
 		}
 	}
 
-	public void Save(string filename, int width = -1, int height = -1, string path = "")
-	{
-		if (width <= 0 || height <= 0)
-		{
-			width = Screen.width;
-			height = Screen.height;
-		}
-
-		var filenameExtension = System.IO.Path.GetExtension(filename);
-		if (filenameExtension == "")
-			filenameExtension = ".png";
-		var filenameWithoutExtension = Path.GetFileNameWithoutExtension(filename);
-
-		var pathWithoutExtension = Path.Combine(path, filenameWithoutExtension);
-
-		// execute as coroutine to wait for the EndOfFrame before starting capture
-		StartCoroutine(
-			WaitForEndOfFrameAndSave(pathWithoutExtension, filenameExtension, width, height));
-	}
-
-	private IEnumerator WaitForEndOfFrameAndSave(string filenameWithoutExtension, string filenameExtension, int width, int height)
-	{
-		yield return new WaitForEndOfFrame();
-		Save(filenameWithoutExtension, filenameExtension, width, height);
-	}
-
-	private void Save(string filenameWithoutExtension, string filenameExtension, int width, int height)
-	{
-		foreach (var pass in capturePasses)
-			Save(pass.camera, filenameWithoutExtension + pass.name + filenameExtension, width, height, pass.supportsAntialiasing, pass.needsRescale);
-	}
-
-	private void Save(Camera cam, string filename, int width, int height, bool supportsAntialiasing, bool needsRescale)
-	{
-		var mainCamera = GetComponent<Camera>();
-		var depth = 24;
-		var format = RenderTextureFormat.Default;
-		var readWrite = RenderTextureReadWrite.Default;
-		var antiAliasing = (supportsAntialiasing) ? Mathf.Max(1, QualitySettings.antiAliasing) : 1;
-
-		var finalRT =
-			RenderTexture.GetTemporary(width, height, depth, format, readWrite, antiAliasing);
-		var renderRT = (!needsRescale) ? finalRT :
-			RenderTexture.GetTemporary(mainCamera.pixelWidth, mainCamera.pixelHeight, depth, format, readWrite, antiAliasing);
-		var tex = new Texture2D(width, height, TextureFormat.RGB24, false);
-
-		var prevActiveRT = RenderTexture.active;
-		var prevCameraRT = cam.targetTexture;
-
-		// render to offscreen texture (readonly from CPU side)
-		RenderTexture.active = renderRT;
-		cam.targetTexture = renderRT;
-
-		cam.Render();
-
-		if (needsRescale)
-		{
-			// blit to rescale (see issue with Motion Vectors in @KNOWN ISSUES)
-			RenderTexture.active = finalRT;
-			Graphics.Blit(renderRT, finalRT);
-			RenderTexture.ReleaseTemporary(renderRT);
-		}
-
-		// read offsreen texture contents into the CPU readable texture
-		tex.ReadPixels(new Rect(0, 0, tex.width, tex.height), 0, 0);
-		tex.Apply();
-
-		// encode texture into PNG
-		var bytes = tex.EncodeToPNG();
-		File.WriteAllBytes(filename, bytes);					
-
-		// restore state and cleanup
-		cam.targetTexture = prevCameraRT;
-		RenderTexture.active = prevActiveRT;
-
-		Object.Destroy(tex);
-		RenderTexture.ReleaseTemporary(finalRT);
-	}
-
 	public CaptureResult GetImageResult(int width, int height) 
 	{
 		CaptureResult result = new CaptureResult(
-			GetImageResult(capturePasses[0].camera, width, height, capturePasses[0].supportsAntialiasing, capturePasses[0].needsRescale),
-			GetImageResult(capturePasses[1].camera, width, height, capturePasses[1].supportsAntialiasing, capturePasses[1].needsRescale)
+			GetImageResult(capturePasses[0].camera, width, height, capturePasses[0].supportsAntialiasing, capturePasses[0].needsRescale)
 		);
 		return result;
 	}

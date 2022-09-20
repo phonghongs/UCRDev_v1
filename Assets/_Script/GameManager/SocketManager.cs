@@ -8,7 +8,7 @@ using System;
 using System.Text;
 using Newtonsoft.Json;
 using System.Net.NetworkInformation;
-
+using TMPro;
 
 public class SocketManager : MonoBehaviour{
     // Start is called before the first frame update
@@ -17,6 +17,8 @@ public class SocketManager : MonoBehaviour{
     private Thread[] mThread;
     private TcpListener[] tcp_Listener;
     private int[] remotePort;
+
+    public TMP_Text portShow;
 
     public void StartSocketServer(){
         //int numPlayer = PlayerManager.Instance.getNumPlayer();
@@ -36,9 +38,10 @@ public class SocketManager : MonoBehaviour{
         TcpConnectionInformation[] tcpConnInfoArray = ipGlobalProperties.GetActiveTcpConnections();
         // Create Player Port
         remotePort = new int[numPlayer];
-        int i = 0;
         int baseIP = 11000;
+        int i = 0;
         for (int j = 0; j < numPlayer; j ++){
+            // remotePort[j] = baseIP + j;
             bool portOpen =  true;
             while (i < 100 && portOpen) {
                 remotePort[j] = baseIP + i;
@@ -55,7 +58,8 @@ public class SocketManager : MonoBehaviour{
                 else 
                     break;
             }
-            Debug.Log(remotePort[j]);//
+            portShow.text += remotePort[j].ToString() + " ";
+            Debug.Log(remotePort[j]);
             RestartServer(j);
         }
 
@@ -90,29 +94,24 @@ public class SocketManager : MonoBehaviour{
                         var myDetails = JsonConvert.DeserializeObject < SetController > (jsonData);
                         String returnMessage = "";
                         switch (myDetails.Cmd){
-                            case 1:
+                            case 18520:
                                 PrometeoCarController.VehicleStageCl vhS = PlayerManager.Instance.getPlayer(serverIndex).controller.GetState();
                                 var VehicleStage_ = new VehicleStage{
-                                    Cmd = 1,
+                                    Cmd = 18520,
                                     Speed = vhS.crSpeed,
                                     Angle = vhS.crSteering,
-                                    Lat = vhS.location.x,
-                                    Lon = vhS.location.y,
                                     Heading = vhS.rotation.y
                                 };
                                 returnMessage = JsonConvert.SerializeObject(VehicleStage_);
                                 msg = Encoding.UTF8.GetBytes(returnMessage);
+                                PlayerManager.Instance.getPlayer(serverIndex).controller.SetAVCOntroller(myDetails.Speed, myDetails.Angle);
                                 break;
-                            case 2:
-                                msg = PlayerManager.Instance.getPlayer(serverIndex).controller.imageResult.originalIMG;
-                                break;
-                            case 3:
+                            case 331:
                                 msg = PlayerManager.Instance.getPlayer(serverIndex).controller.imageResult.segmentIMG;
                                 break;
                             default:
                             break;
                         }
-                        Debug.Log(msg.Length);
                         stream.Write(msg, 0, msg.Length);
                     }
                     client.Close();
@@ -139,10 +138,9 @@ public class SocketManager : MonoBehaviour{
         mRunning[serverIndex] = false;
     }
     private void Awake() {
-        StartSocketServer();
     }
     void Start(){
-        
+        StartSocketServer();
     }
     void Update(){
         
