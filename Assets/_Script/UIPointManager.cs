@@ -28,6 +28,7 @@ public class UIPointManager : MonoBehaviour{
 
     public Text CheckpointPass;
     public Text Time_showfull;      //"00:00:00.00"
+    public Text CoinEarned;
 
     // public Text Coin;
     // public Text FPS;
@@ -178,7 +179,9 @@ public class UIPointManager : MonoBehaviour{
         //         TimeScaleShow.text = ((float)Time.timeScale).ToString("F0");
         //     }
         // }
-        
+
+        CoinEarned.text = $"{CoinsManager.Instance.coinCounting}/{CoinsManager.Instance.numCoins}";
+
         foreach(GameObject tcar in GameObject.FindGameObjectsWithTag("topCar")){
             if(cpflag1 != tcar.GetComponent<CheckpointPass>().numCheckpointPassed){
                 // Debug.Log(Time_showfull.text);
@@ -187,7 +190,7 @@ public class UIPointManager : MonoBehaviour{
                         _TimerStart_ = _Timer_;
                         Debug.Log(_TimerStart_.ToString());
                     }
-                    Car_TimeCheckpointTimeLab[tcar.GetComponent<CheckpointPass>().numCheckpointPassed].text =  Time2String(_Timer_ - _TimerStart_);
+                    Car_TimeCheckpointTimeLab[tcar.GetComponent<CheckpointPass>().numCheckpointPassed].text =  Time2String(_Timer_ - _TimerStart_) + $" / {CoinsManager.Instance.coinCounting}/{CoinsManager.Instance.numCoins}";
                     cpflag1 += 1;
                 }
             }

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine;
+using TMPro;
 
 public class checkpoint : MonoBehaviour
 {
@@ -18,7 +19,8 @@ public class checkpoint : MonoBehaviour
     private float currentCheckpoint;
     private float currentLap;
     private bool started;
-    private bool finished;
+    public bool finished;
+    public float maxTimePerLap;
 
     private float currentLapTime;
     private float bestLapTime;
@@ -179,5 +181,17 @@ public class checkpoint : MonoBehaviour
 
         string formattedCoin = $"Coins earned : {(CoinsManager.Instance.coinCounting)} - {(CoinsManager.Instance.numCoins)}";
         GUI.Label(new Rect(50, 50, 250, 100), formattedCoin, guistyle);
+
+        string totalScore = $"Total Score : {CalTotalScore()}";
+        GUI.Label(new Rect(50, 70, 250, 100), totalScore, guistyle);
+    }
+
+    public string CalTotalScore()
+    {
+        float scoreCoins = ((float)CoinsManager.Instance.coinCounting/(float)CoinsManager.Instance.numCoins) * 10;
+        float scoreTimes = ((maxTimePerLap - bestLapTime) / maxTimePerLap) * 30;
+        float scoreCheckpoints = ((currentCheckpoint) / checkpoints.Length) * 60;
+
+        return $"{scoreCoins + scoreTimes + scoreCheckpoints}";
     }
 }

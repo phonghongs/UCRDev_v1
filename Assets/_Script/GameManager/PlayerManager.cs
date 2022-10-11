@@ -84,6 +84,7 @@ public class PlayerManager : MonoBehaviour
     }
 
     IEnumerator ResetHelper(GameObject other, int ind){
+        players[ind].controller.isAvController = false;
         other.transform.position = playerPosition[ind].transform.position;
         other.transform.rotation = playerPosition[ind].transform.rotation;
         other.GetComponent<Rigidbody>().isKinematic = true;

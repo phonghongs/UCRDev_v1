@@ -8,6 +8,10 @@ TagManager:
   - CHECKPOINT
   - Coin
   - Outline
+  - Timelab
+  - CHECKOUT
+  - topCar
+  - midCar
   layers:
   - Default
   - TransparentFX
@@ -15,13 +19,13 @@ TagManager:
   - 
   - Water
   - UI
-  - cube
+  - CAM_THANG
   - road
-  - 
-  - 
-  - 
-  - 
-  - 
+  - DI_THANG
+  - QUEO_TRAI
+  - QUEO_PHAI
+  - CAM_TRAI
+  - CAM_PHAI
   - 
   - 
   - 
