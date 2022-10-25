@@ -8,7 +8,7 @@ public class CoinsManager : MonoBehaviour
     public PathCreator pathCreator;
     public GameObject coinObject;
 
-    public int coinCounting;
+    public int[] coinCounting;
     public float numCoins = 1000;
     public static CoinsManager Instance { get; private set; }
 
@@ -28,7 +28,7 @@ public class CoinsManager : MonoBehaviour
     }
 
     private void Start() {
-        coinCounting = 0;
+        coinCounting = new int[] { 0, 0};
 
         for (float i = 0; i < 1; i += (1/numCoins))
         {

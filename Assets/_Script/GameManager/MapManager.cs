@@ -8,19 +8,20 @@ public class MapManager : MonoBehaviour
 {
     public static MapManager Instance { get; private set; }
     public Transform[] spawnPosition;
-    public TextMeshProUGUI TotalScore;
+    public Transform resetPosition;
+    //public TextMeshProUGUI[] TotalScore;
 
     // Start is called before the first frame update
     void Start()
     {
         PlayerManager.Instance.SetSpawnPosition(spawnPosition);
-        TotalScore.gameObject.SetActive(false);
+        //TotalScore.gameObject.SetActive(false);
     }
 
-    public void OnCompleteMap()
+    public void OnCompleteMap(int index)
     {
-        TotalScore.gameObject.SetActive(true);
-        TotalScore.text = checkpoint.Instance.CalTotalScore();
+        //TotalScore.gameObject.SetActive(true);
+        //TotalScore.text = checkpoint.Instance.CalTotalScore();
     }
 
     private void Awake()

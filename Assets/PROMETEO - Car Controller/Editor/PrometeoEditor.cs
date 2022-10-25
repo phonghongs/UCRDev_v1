@@ -18,6 +18,7 @@ public class PrometeoEditor : Editor{
   //
   private SerializedProperty synth;
   private SerializedProperty playerCam;
+  private SerializedProperty Cam4Round2;
   //
   //
   //CAR SETUP
@@ -88,7 +89,8 @@ public class PrometeoEditor : Editor{
 
     synth = SO.FindProperty("synth");
     playerCam = SO.FindProperty("playerCam");
-    maxSpeed = SO.FindProperty("maxSpeed");
+        Cam4Round2 = SO.FindProperty("Cam4Round2");
+        maxSpeed = SO.FindProperty("maxSpeed");
     maxReverseSpeed = SO.FindProperty("maxReverseSpeed");
     accelerationMultiplier = SO.FindProperty("accelerationMultiplier");
     maxSteeringAngle = SO.FindProperty("maxSteeringAngle");
@@ -148,8 +150,9 @@ public class PrometeoEditor : Editor{
 
         EditorGUILayout.PropertyField(synth, new GUIContent("Synth Camera: "));
         EditorGUILayout.PropertyField(playerCam, new GUIContent("Player Camera: "));
+        EditorGUILayout.PropertyField(Cam4Round2, new GUIContent("Cam4Round2: "));
 
-    GUILayout.Space(25);
+        GUILayout.Space(25);
     GUILayout.Label("CAR SETUP", EditorStyles.boldLabel);
     GUILayout.Space(10);
     //

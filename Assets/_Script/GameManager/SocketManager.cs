@@ -16,9 +16,26 @@ public class SocketManager : MonoBehaviour{
     private bool[] mRunning;
     private Thread[] mThread;
     private TcpListener[] tcp_Listener;
-    private int[] remotePort;
+    public int[] remotePort;
 
     public TMP_Text portShow;
+
+    public static SocketManager Instance { get; private set; }
+
+    private void Awake()
+    {
+        // If there is an instance, and it's not me, delete myself.
+
+        if (Instance != null && Instance != this)
+        {
+            Destroy(this);
+            return;
+        }
+        else
+        {
+            Instance = this;
+        }
+    }
 
     public void StartSocketServer(){
         //int numPlayer = PlayerManager.Instance.getNumPlayer();
@@ -137,8 +154,7 @@ public class SocketManager : MonoBehaviour{
     public void stopListening(int serverIndex){
         mRunning[serverIndex] = false;
     }
-    private void Awake() {
-    }
+
     void Start(){
         StartSocketServer();
     }

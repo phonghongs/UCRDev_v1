@@ -1,12 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEditor.UI;
 public class PlayerShape
 {
     public int playerID;
     public PrometeoCarController controller;
     public GameObject obj;
+    public int playerPort;
     public Vector3 getPosition()
     {
         return obj.transform.position;
@@ -19,11 +20,15 @@ public class PlayerShape
 
 public class PlayerManager : MonoBehaviour
 {
+    public RenderTexture player1;
+    public RenderTexture player2;
+    public CanvasController playerCanvas;
     private PlayerShape[] players = null;
     private VehiclesPool pool;
     private int numPlayer = 0;
     private Transform[] playerPosition;
     public GameObject[] vehiclePrefabs;
+    public int targetPlayer = 0;
     public static PlayerManager Instance { get; private set; }
 
     public int getNumPlayer()
@@ -62,6 +67,7 @@ public class PlayerManager : MonoBehaviour
             players[i].controller.controllerActivate = false;
         }
         players[index].controller.controllerActivate = true;
+        targetPlayer = index;
     }
 
     public void SetAVCOntroller()
@@ -85,11 +91,15 @@ public class PlayerManager : MonoBehaviour
 
     IEnumerator ResetHelper(GameObject other, int ind){
         players[ind].controller.isAvController = false;
-        other.transform.position = playerPosition[ind].transform.position;
-        other.transform.rotation = playerPosition[ind].transform.rotation;
+        //other.transform.position = playerPosition[ind].transform.position;
+        //other.transform.rotation = playerPosition[ind].transform.rotation;
+        other.transform.position = MapManager.Instance.resetPosition.transform.position;
+        other.transform.rotation = MapManager.Instance.resetPosition.transform.rotation;
         other.GetComponent<Rigidbody>().isKinematic = true;
         yield return new WaitForSeconds(0.1f);
         other.GetComponent<Rigidbody>().isKinematic = false;
+        yield return new WaitForSeconds(2f);
+        other.GetComponent<Rigidbody>().isKinematic = true;
     }
 
     public void SetSpawnPosition(Transform[] _playerPosition)
@@ -103,7 +113,11 @@ public class PlayerManager : MonoBehaviour
 
         for (int ind = 0; ind < numPlayer; ind += 1)
         {
-            int perfabIndx = UnityEngine.Random.Range(0, vehiclePrefabs.Length);
+            int perfabIndx = ind;
+            if (ind >= vehiclePrefabs.Length)
+            {
+                perfabIndx = UnityEngine.Random.Range(0, vehiclePrefabs.Length);
+            }
             var shape = pool.Get((ShapeLabel)perfabIndx);
             var newObj = shape.obj;
             newObj.transform.position = playerPosition[ind].transform.position;
@@ -115,7 +129,8 @@ public class PlayerManager : MonoBehaviour
             {
                 playerID = ind,
                 obj = newObj,
-                controller = newObj.GetComponent<PrometeoCarController>()
+                controller = newObj.GetComponent<PrometeoCarController>(),
+                playerPort = 0000
             };
         }
     }
@@ -143,9 +158,31 @@ public class PlayerManager : MonoBehaviour
         
     }
 
+    bool isInnit = false;
     // Update is called once per frame
     void Update()
     {
-        
+        if (Instance.players.Length == 2)
+        {
+            if (!isInnit)
+            {
+                isInnit = true;
+                players[0].controller.Cam4Round2.targetTexture = player1;
+                players[1].controller.Cam4Round2.targetTexture = player2;
+            }
+            else
+            {
+                playerCanvas.FomatPlayer1(
+                    SocketManager.Instance.remotePort[0].ToString(),
+                    checkpoint.Instance.currentCheckpoint[0].ToString(),
+                    checkpoint.Instance.CalTotalScore(0).ToString()
+                    );
+                playerCanvas.FomatPlayer2(
+                    SocketManager.Instance.remotePort[1].ToString(),
+                    checkpoint.Instance.currentCheckpoint[1].ToString(),
+                    checkpoint.Instance.CalTotalScore(1).ToString()
+                    );
+            }
+        }
     }
 }

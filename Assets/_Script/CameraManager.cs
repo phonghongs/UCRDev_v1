@@ -11,7 +11,22 @@ public class CameraManager : MonoBehaviour
     public GameObject initializeCamera;
     private int playerIndex = 0;
     // public TMP_Text portShow;
+    public static CameraManager Instance { get; private set; }
 
+    private void Awake()
+    {
+        // If there is an instance, and it's not me, delete myself.
+
+        if (Instance != null && Instance != this)
+        {
+            Destroy(this);
+            return;
+        }
+        else
+        {
+            Instance = this;
+        }
+    }
     void Start(){
         camController.carTransform = initializeCamera.GetComponent<Transform>();
         // changeVehicles.onClick.AddListener(TaskOnClick);

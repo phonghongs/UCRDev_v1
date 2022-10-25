@@ -19,8 +19,8 @@ public class PrometeoCarController : MonoBehaviour
     // Camera Synth
       public ImageSynthesis synth;
       public Camera playerCam;
+    public Camera Cam4Round2;
       public ImageSynthesis.CaptureResult imageResult;
-
       public int vehicleID;
 
     //CAR SETUP

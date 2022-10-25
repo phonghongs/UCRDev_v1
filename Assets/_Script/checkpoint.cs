@@ -7,24 +7,25 @@ using TMPro;
 public class checkpoint : MonoBehaviour
 {
     [Header("Points")]
-    public GameObject start;
-    public GameObject end;
+    public GameObject[] start;
+    public GameObject[] end;
     public GameObject[] checkpoints;
-    
+
+    public List<List<GameObject>> passedCheckpoint;
 
     [Header("Settings")]
     public float laps = 1;
 
     [Header("Information")]
-    private float currentCheckpoint;
-    private float currentLap;
-    private bool started;
-    public bool finished;
+    public float[] currentCheckpoint;
+    private float[] currentLap;
+    private bool[] started;
+    public bool[] finished;
     public float maxTimePerLap;
 
-    private float currentLapTime;
-    private float bestLapTime;
-    private float bestLap;
+    public float[] currentLapTime;
+    private float[] bestLapTime;
+    private float[] bestLap;
 
     public static checkpoint Instance { get; private set; }
 
@@ -53,63 +54,60 @@ public class checkpoint : MonoBehaviour
         guistyle.font = Font.CreateDynamicFontFromOSFont("Liberation Sans", 14);
         guistyle.normal.textColor = Color.white;
 
-        currentCheckpoint = 0;
-        currentLap = 1;
+        currentCheckpoint = new float[] { 0.0f, 0.0f };
+        currentLap = new float[] { 1.0f, 1.0f };
 
-        started = false;
-        finished = false;
+        started = new bool[] { false, false };
+        finished = new bool[] { false, false };
 
-        currentLapTime = 0;
-        bestLapTime = 0;
-        bestLap = 0;
+        currentLapTime = new float[] { 0.0f, 0.0f };
+        bestLapTime = new float[] { 0.0f, 0.0f };
+        bestLap = new float[] { 0.0f, 0.0f };
+
+        passedCheckpoint = new List<List<GameObject>>();
+        passedCheckpoint.Add(new List<GameObject>());
+        passedCheckpoint.Add(new List<GameObject>());
     }
 
     private void Update()
     {
-        if (started && !finished)
+        for (int i = 0; i < started.Length; i++)
         {
-            currentLapTime += Time.deltaTime;
-            
-            if (bestLap == 0)
+            if (started[i] && !finished[i])
             {
-                bestLap = 1;
+                currentLapTime[i] += Time.deltaTime;
             }
-        }
 
-        if (started)
-        {
-            if (bestLap == currentLap)
+            if (started[i])
             {
                 bestLapTime = currentLapTime;
             }
         }
     }
 
-    public void OnTriggerCheckpoint(Collider other)
+    public void CheckpointPerPlayer(GameObject thisCheckpoint, int playerindex)
     {
-        GameObject thisCheckpoint = other.gameObject;
-
         // Started the race
-        if (thisCheckpoint == start && !started)
+        if (thisCheckpoint == start[playerindex] && !started[playerindex])
         {
             print("Started");
-            started = true;
+            started[playerindex] = true;
         }
         // Ended the lap or race
-        else if (thisCheckpoint == end && started)
+        else if (thisCheckpoint == end[playerindex] && started[playerindex])
         {
             // If all the laps are finished, end the race
-            if (currentLap == laps)
+            if (currentLap[playerindex] == laps)
             {
-                if (currentCheckpoint == checkpoints.Length)
+                if (currentCheckpoint[playerindex] == checkpoints.Length)
                 {
-                    if (currentLapTime < bestLapTime)
+                    if (currentLapTime[playerindex] < bestLapTime[playerindex])
                     {
-                        bestLap = currentLap;
+                        bestLap[playerindex] = currentLap[playerindex];
                     }
 
-                    finished = true;
-                    print("Finished");
+                    finished[playerindex] = true;
+                    print($"Finished: {playerindex}");
                 }
                 else
                 {
@@ -117,20 +115,20 @@ public class checkpoint : MonoBehaviour
                 }
             }
             // If all laps are not finished, start a new lap
-            else if (currentLap < laps)
+            else if (currentLap[playerindex] < laps)
             {
-                if (currentCheckpoint == checkpoints.Length)
+                if (currentCheckpoint[playerindex] == checkpoints.Length)
                 {
-                    if (currentLapTime < bestLapTime)
+                    if (currentLapTime[playerindex] < bestLapTime[playerindex])
                     {
-                        bestLap = currentLap;
-                        bestLapTime = currentLapTime; // Because the update function has already run this frame, we need to add this line or it won't work
+                        bestLap[playerindex] = currentLap[playerindex];
+                        bestLapTime[playerindex] = currentLapTime[playerindex]; // Because the update function has already run this frame, we need to add this line or it won't work
                     }
 
-                    currentLap++;
-                    currentCheckpoint = 0;
-                    currentLapTime = 0;
-                    print($"Started lap {currentLap}");
+                    currentLap[playerindex]++;
+                    currentCheckpoint[playerindex] = 0;
+                    currentLapTime[playerindex] = 0;
+                    print($"Started lap {currentLap[playerindex]}");
                 }
                 else
                 {
@@ -139,58 +137,76 @@ public class checkpoint : MonoBehaviour
             }
         }
 
-        // Loop through the checkpoints to compare and check which one the player touched
-        for (int i = 0; i < checkpoints.Length; i++)
+        if (finished[playerindex])
+            return;
+        if (passedCheckpoint[playerindex].Count > 0 && passedCheckpoint[playerindex].Contains(thisCheckpoint))
         {
-            if (finished)
-                return;
+            return;
+        }
 
-            // If the checkpoint is correct
-            if (thisCheckpoint == checkpoints[i] && i + 1 == currentCheckpoint + 1)
+        currentCheckpoint[playerindex]++;
+        passedCheckpoint[playerindex].Add(thisCheckpoint);
+
+        // Loop through the checkpoints to compare and check which one the player touched
+        //for (int i = 0; i < checkpoints.Length; i++)
+        //{
+        //    if (finished[playerindex])
+        //        return;
+
+        //    print($"Correct Checkpoint: {Mathf.FloorToInt(currentLapTime[playerindex] / 60)}:{currentLapTime[playerindex] % 60:00.000}");
+        //    currentCheckpoint[playerindex]++;
+        //    print(currentCheckpoint[playerindex]);
+        //}
+    }
+
+    public void OnTriggerCheckpoint(Collider other, GameObject playerobject)
+    {
+        GameObject thisCheckpoint = other.gameObject;
+
+        for (int i = 0; i < PlayerManager.Instance.getNumPlayer(); i++)
+        {
+            if (playerobject == PlayerManager.Instance.getPlayer(i).obj)
             {
-                print($"Correct Checkpoint: {Mathf.FloorToInt(currentLapTime / 60)}:{currentLapTime % 60:00.000}");
-                currentCheckpoint++;
-                print(currentCheckpoint);
-            }
-            // If the checkpoint is incorrect
-            else if (thisCheckpoint == checkpoints[i] && i + 1 != currentCheckpoint + 1)
-            {
-                print($"Incorrect checkpoint");
+                CheckpointPerPlayer(thisCheckpoint, i);
+                break;
             }
         }
     }
 
 
-    private void OnGUI()
+    //private void OnGUI()
+    //{
+    //    // Current time
+    //    string formattedCurrentLapTime = $"Current: {Mathf.FloorToInt(currentLapTime / 60)}:{currentLapTime % 60:00.000} - (Lap {currentLap})";
+    //    GUI.Label(new Rect(50, 10, 250, 100), formattedCurrentLapTime, guistyle);
+
+    //    // Best time
+    //    string formattedBestLapTime = $"Best: {Mathf.FloorToInt(bestLapTime / 60)}:{bestLapTime % 60:00.000} - (Lap {bestLap})";
+    //    GUI.Label(new Rect(250, 10, 250, 100), (started) ? formattedBestLapTime : "0:00.000", guistyle);
+
+    //    // Current checkpoint
+    //    string formattedcheckpoint = $"Current: {Mathf.FloorToInt(currentCheckpoint)}";
+    //    GUI.Label(new Rect(450, 10, 250, 100),formattedcheckpoint, guistyle);
+
+    //    // Checkpoint left
+    //    string formattedcheckpointleft = $"Checkpoint left : {(checkpoints.Length) - Mathf.FloorToInt(currentCheckpoint)}";
+    //    GUI.Label(new Rect(50, 30, 250, 100), formattedcheckpointleft, guistyle);
+
+    //    string formattedCoin = $"Coins earned : {(CoinsManager.Instance.coinCounting)} - {(CoinsManager.Instance.numCoins)}";
+    //    GUI.Label(new Rect(50, 50, 250, 100), formattedCoin, guistyle);
+
+    //    string totalScore = $"Total Score : {CalTotalScore()}";
+    //    GUI.Label(new Rect(50, 70, 250, 100), totalScore, guistyle);
+    //}
+
+    public string CalTotalScore(int indexPlayer)
     {
-        // Current time
-        string formattedCurrentLapTime = $"Current: {Mathf.FloorToInt(currentLapTime / 60)}:{currentLapTime % 60:00.000} - (Lap {currentLap})";
-        GUI.Label(new Rect(50, 10, 250, 100), formattedCurrentLapTime, guistyle);
+        float scoreCoins = ((float)CoinsManager.Instance.coinCounting[indexPlayer]/(float)CoinsManager.Instance.numCoins) * 10;
+        float scoreTimes = ((maxTimePerLap - bestLapTime[indexPlayer]) / maxTimePerLap) * 30;
+        float scoreCheckpoints = ((currentCheckpoint[indexPlayer]) / checkpoints.Length) * 60;
 
-        // Best time
-        string formattedBestLapTime = $"Best: {Mathf.FloorToInt(bestLapTime / 60)}:{bestLapTime % 60:00.000} - (Lap {bestLap})";
-        GUI.Label(new Rect(250, 10, 250, 100), (started) ? formattedBestLapTime : "0:00.000", guistyle);
-
-        // Current checkpoint
-        string formattedcheckpoint = $"Current: {Mathf.FloorToInt(currentCheckpoint)}";
-        GUI.Label(new Rect(450, 10, 250, 100),formattedcheckpoint, guistyle);
-
-        // Checkpoint left
-        string formattedcheckpointleft = $"Checkpoint left : {(checkpoints.Length) - Mathf.FloorToInt(currentCheckpoint)}";
-        GUI.Label(new Rect(50, 30, 250, 100), formattedcheckpointleft, guistyle);
-
-        string formattedCoin = $"Coins earned : {(CoinsManager.Instance.coinCounting)} - {(CoinsManager.Instance.numCoins)}";
-        GUI.Label(new Rect(50, 50, 250, 100), formattedCoin, guistyle);
-
-        string totalScore = $"Total Score : {CalTotalScore()}";
-        GUI.Label(new Rect(50, 70, 250, 100), totalScore, guistyle);
-    }
-
-    public string CalTotalScore()
-    {
-        float scoreCoins = ((float)CoinsManager.Instance.coinCounting/(float)CoinsManager.Instance.numCoins) * 10;
-        float scoreTimes = ((maxTimePerLap - bestLapTime) / maxTimePerLap) * 30;
-        float scoreCheckpoints = ((currentCheckpoint) / checkpoints.Length) * 60;
+        if (scoreTimes < 0)
+            scoreTimes = 0;
 
         return $"{scoreCoins + scoreTimes + scoreCheckpoints}";
     }
